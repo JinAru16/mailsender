@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 public class MessageSchedule {
     private final JDA jda;
 
-    @Scheduled(cron = "0 27 10 * * *") // 매주 목요일 10:00
+    @Scheduled(cron = "0 0 10 * * THU") // 매주 목요일 10:00
     public void sendWeeklyMessage() {
         runTest();
     }
