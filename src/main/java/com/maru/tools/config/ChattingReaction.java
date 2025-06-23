@@ -14,16 +14,13 @@ public class ChattingReaction extends ListenerAdapter {
         Message message = event.getMessage();
         TextChannel channel = event.getChannel().asTextChannel();
 
-        System.out.println(message.getTimeCreated());
-
-        System.out.println(message);
         String str = message.getContentDisplay();
-
-        System.out.println(event.getMessage().getChannelId());
 
         if(str.equals("ping")){
             event.getChannel().sendMessage("Pong!").queue();
         }
+
+        System.out.println(event.getGuild().getId());
 
         if(str.equals("history")){
             channel.getHistory()

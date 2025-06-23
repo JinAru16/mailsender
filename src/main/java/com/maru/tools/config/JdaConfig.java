@@ -1,14 +1,18 @@
 package com.maru.tools.config;
 
-import com.maru.tools.jda.SlashCommandListener;
+import com.maru.tools.command.SlashCommandListener;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.JDABuilder;
+import net.dv8tion.jda.api.entities.Guild;
+import net.dv8tion.jda.api.interactions.commands.build.Commands;
 import net.dv8tion.jda.api.requests.GatewayIntent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.util.EnumSet;
+
+import static net.dv8tion.jda.api.interactions.commands.OptionType.STRING;
 
 @Configuration
 public class JdaConfig {
@@ -27,12 +31,17 @@ public class JdaConfig {
                 GatewayIntent.GUILD_VOICE_STATES);
 
 
-        return JDABuilder.createDefault(botToken)
+        JDA jda = JDABuilder.createDefault(botToken)
                 .enableIntents(intents)
                 .addEventListeners(slashCommandListener) // 이벤트 리스너 주입
                 .addEventListeners(new ChattingReaction())
                 .build()
-                .awaitReady(); // 초기화 완료까지 블로킹 (중요)
+                .awaitReady();// 초기화 완료까지 블로킹 (중요)
+
+        slashCommandListener.registerSlashCommands(jda);
+
+        return jda;
     }
+
 }
 
