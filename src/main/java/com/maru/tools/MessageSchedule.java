@@ -6,14 +6,20 @@ import lombok.RequiredArgsConstructor;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.time.LocalDateTime;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -47,8 +53,45 @@ public class MessageSchedule {
                     .toList();
 
             // 메시지 -> 메일화
-             emailService.convertMessageToEmail(userMessageHistory);
+            Workbook sheets = convertMessageToExcel(userMessageHistory);
+            emailService.sendMailWithContent(sheets);
+
         });
     }
+
+    private Workbook convertMessageToExcel(List<Message> userMessageHistory) {
+        // 엑셀에 들어갈 어떤 객체
+        Workbook workbook = new XSSFWorkbook();
+
+        Sheet sheet = workbook.createSheet("Weekly Report");
+
+        // 헤더
+        Row header = sheet.createRow(0);
+        header.createCell(0).setCellValue("content");
+
+        int rowIdx = 1;
+
+        for (Message message : userMessageHistory) {
+            Row row = sheet.createRow(rowIdx++);
+            row.createCell(0).setCellValue(message.getContentDisplay());
+        }
+
+        // 저장
+        try (FileOutputStream out = new FileOutputStream("weekly_report.xlsx")) {
+            workbook.write(out);
+            return workbook;
+        } catch (IOException e) {
+            throw new RuntimeException("엑셀 저장 실패", e);
+        } finally {
+            try {
+                workbook.close();
+            } catch (IOException e) {
+                // 무시
+            }
+        }
+
+    }
+
+
 
 }

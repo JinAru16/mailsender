@@ -1,6 +1,7 @@
 package com.maru.tools.email.service;
 
 
+import com.maru.tools.email.MailSender;
 import com.maru.tools.email.domain.Email;
 import com.maru.tools.email.domain.EmailDto;
 import com.maru.tools.email.repository.EmailRepository;
@@ -9,19 +10,24 @@ import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.context.annotation.Description;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class EmailService {
     private final Validator validator;
     private final EmailRepository emailRepository;
+    private final MailSender mailSender;
 
     public Boolean validEmailAddress(String emailAddress) {
         EmailDto email = new EmailDto(emailAddress);
@@ -45,9 +51,10 @@ public class EmailService {
         }
     }
 
-    public void convertMessageToEmail(List<Message> userMessageHistory) {
-        userMessageHistory.forEach(message -> {
-            message.getContentDisplay();
-        });
+
+    public void sendMailWithContent(Workbook sheets) {
+        List<MultipartFile> files = new ArrayList<>();
+        files.add((MultipartFile) sheets);
+        // WorkBook을 어떻게 MultiPartFiles로 바꿀것이냐. GPT에게 답변 받아둔거 참고
     }
 }
