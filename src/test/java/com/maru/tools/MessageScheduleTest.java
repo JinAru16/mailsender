@@ -19,19 +19,14 @@ class MessageScheduleTest {
 
     @Autowired
     JDA jda;
+
+    @Autowired
+    MessageSchedule messageSchedule;
     @Test
     @DisplayName("")
     void callScheduleFixedClock(){
         //given
-        LocalDateTime now = LocalDateTime.now();
-        LocalDateTime sevenDaysBefore = now.minusDays(7);
-
-        System.out.println(sevenDaysBefore);
-
-        TextChannel channel = jda.getTextChannelById("1382576573810741321");
-
-        channel.getHistory().retrievePast(10).queue();
-
+        messageSchedule.reportTask();
         //when
 
         //then
