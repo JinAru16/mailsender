@@ -35,7 +35,7 @@ public class MessageSchedule {
     @Value("${report.path}")
     String path;
 
-    //@Scheduled(cron = "0 0 10 * * THU") // 매주 목요일 10:00
+    //@Scheduled(cron = "0 0 9 * * THU") // 매주 목요일 10:00
     @Scheduled(cron = "10 * * * * * ")
     public void sendWeeklyMessage() {
         System.out.println("스케쥴 실행");
@@ -75,7 +75,7 @@ public class MessageSchedule {
             Workbook workbook = new XSSFWorkbook(template);
             Sheet sheet = workbook.getSheetAt(0);
 
-            int startRowIdx = 12;
+            int startRowIdx = 11;
             int endRowIdx = 26;
 
             // 노무법인: 전주 / 금주 셀 13~26번째 row

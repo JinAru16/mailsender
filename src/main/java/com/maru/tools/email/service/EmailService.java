@@ -8,19 +8,10 @@ import com.maru.tools.email.repository.EmailRepository;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validator;
 import lombok.RequiredArgsConstructor;
-import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.context.annotation.Description;
-import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.util.*;
 
 @Service
@@ -37,7 +28,7 @@ public class EmailService {
     }
 
     @Description("기존에 저정한 이메일 주소가 있으면 신규주소로 update. 없다면 insert")
-    public Email setRecipientMailService(SlashCommandInteractionEvent event){
+    public Email setRecipien(SlashCommandInteractionEvent event){
         Optional<Email> existingEmailInfo = emailRepository.findByDiscordId(event.getMember().getId());
 
         if(existingEmailInfo.isPresent()){
@@ -52,4 +43,29 @@ public class EmailService {
         }
     }
 
+    public Email setReportTitle(SlashCommandInteractionEvent event) {
+        Optional<Email> existingEmailInfo = emailRepository.findByDiscordId(event.getMember().getId());
+        if(existingEmailInfo.isPresent()){
+            Email email = existingEmailInfo.get();
+            String title = Objects.requireNonNull(event.getOption("title")).getAsString();
+
+            email.setTitle(title);
+            return emailRepository.save(email);
+        } else{
+            return emailRepository.save(new Email(event));
+        }
+    }
+
+    public Email setReportContent(SlashCommandInteractionEvent event) {
+        Optional<Email> existingEmailInfo = emailRepository.findByDiscordId(event.getMember().getId());
+        if(existingEmailInfo.isPresent()){
+            Email email = existingEmailInfo.get();
+            String content = Objects.requireNonNull(event.getOption("content")).getAsString();
+
+            email.setTitle(content);
+            return emailRepository.save(email);
+        } else{
+            return emailRepository.save(new Email(event));
+        }
+    }
 }
