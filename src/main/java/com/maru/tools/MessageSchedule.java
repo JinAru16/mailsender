@@ -1,7 +1,9 @@
 package com.maru.tools;
 
 
+import com.maru.tools.email.MailSender;
 import com.maru.tools.email.service.EmailService;
+import jakarta.mail.MessagingException;
 import lombok.RequiredArgsConstructor;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Message;
@@ -10,12 +12,12 @@ import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
+import java.io.*;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -26,22 +28,22 @@ import java.util.List;
 public class MessageSchedule {
     private final JDA jda;
     private final EmailService emailService;
+    private final MailSender mailSender;
 
     //@Scheduled(cron = "0 0 10 * * THU") // 매주 목요일 10:00
     @Scheduled(cron = "10 * * * * * ")
     public void sendWeeklyMessage() {
+        System.out.println("스케쥴 실행");
         reportTask();
     }
 
     public void reportTask(){
         // 등록된 채널 아이디 확인
-        TextChannel channel = jda.getTextChannelById("1382576573810741321");
+        String guildId = "1382576573810741321";
+        TextChannel channel = jda.getTextChannelById(guildId);
 
         // 최근7일동안 입력한 메시지 내역 확인.
-//        if (channel != null) {
-//            channel.sendMessage("📝 주간 보고서 시간입니다! 메시지를 남겨주세요.").queue();
-//            return;
-//        }
+
 
         OffsetDateTime oneWeekAgo = OffsetDateTime.now().minusDays(7);
 
@@ -53,16 +55,23 @@ public class MessageSchedule {
                     .toList();
 
             // 메시지 -> 메일화
-            Workbook sheets = convertMessageToExcel(userMessageHistory);
-            emailService.sendMailWithContent(sheets);
+            ByteArrayResource excelSheet = convertMessageToExcel(userMessageHistory);
 
+            Boolean b = null;
+            try {
+                b = mailSender.sendWeeklyReport(excelSheet, guildId);
+            } catch (MessagingException e) {
+                throw new RuntimeException(e);
+            } catch (UnsupportedEncodingException e) {
+                throw new RuntimeException(e);
+            }
+            channel.sendMessage(b.toString()).queue();
         });
     }
 
-    private Workbook convertMessageToExcel(List<Message> userMessageHistory) {
+    private ByteArrayResource convertMessageToExcel(List<Message> userMessageHistory) {
         // 엑셀에 들어갈 어떤 객체
         Workbook workbook = new XSSFWorkbook();
-
         Sheet sheet = workbook.createSheet("Weekly Report");
 
         // 헤더
@@ -77,9 +86,9 @@ public class MessageSchedule {
         }
 
         // 저장
-        try (FileOutputStream out = new FileOutputStream("weekly_report.xlsx")) {
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream();) {
             workbook.write(out);
-            return workbook;
+            return new ByteArrayResource(out.toByteArray());
         } catch (IOException e) {
             throw new RuntimeException("엑셀 저장 실패", e);
         } finally {
@@ -89,9 +98,5 @@ public class MessageSchedule {
                 // 무시
             }
         }
-
     }
-
-
-
 }

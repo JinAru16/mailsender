@@ -15,6 +15,7 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.context.annotation.Description;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -51,10 +52,4 @@ public class EmailService {
         }
     }
 
-
-    public void sendMailWithContent(Workbook sheets) {
-        List<MultipartFile> files = new ArrayList<>();
-        files.add((MultipartFile) sheets);
-        // WorkBook을 어떻게 MultiPartFiles로 바꿀것이냐. GPT에게 답변 받아둔거 참고
-    }
 }

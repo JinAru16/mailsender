@@ -5,6 +5,7 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEvent;
@@ -12,6 +13,7 @@ import net.dv8tion.jda.api.events.interaction.command.SlashCommandInteractionEve
 import java.util.Objects;
 
 @Entity
+@Getter
 @AllArgsConstructor
 @NoArgsConstructor
 public class Email {
@@ -26,6 +28,10 @@ public class Email {
     private String discordId;
 
     private String guildId;
+
+    private String title;
+
+    private String content;
 
 
     public Email(SlashCommandInteractionEvent event){

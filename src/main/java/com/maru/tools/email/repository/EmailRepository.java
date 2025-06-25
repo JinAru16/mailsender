@@ -9,6 +9,8 @@ import java.util.Optional;
 public interface EmailRepository extends JpaRepository<Email, Long> {
 
     Optional<Email> findByDiscordId(String id);
+
+    Optional<Email> findByGuildId(String guildId);
 }
 
 
