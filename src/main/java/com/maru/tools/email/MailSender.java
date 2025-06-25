@@ -49,7 +49,7 @@ public class MailSender {
 
     }
 
-    public Boolean sendWeeklyReport(ByteArrayResource excelSheet, String guildId) throws MessagingException, UnsupportedEncodingException {
+    public Boolean sendWeeklyReport(ByteArrayResource excelSheet, String guildId) {
 
         Optional<Email> byGuildId = emailRepository.findByGuildId(guildId);
 
@@ -57,19 +57,21 @@ public class MailSender {
             System.out.println(2);
             Email email = byGuildId.get();
             MimeMessage message = javaMailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+            try{
+                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
 
-            helper.addAttachment("주간보고.xlsx", excelSheet);
+                helper.addAttachment("주간보고.xlsx", excelSheet);
 
-            helper.setFrom(new InternetAddress("jinaru0131","Admin"));//보내는 사람
-            helper.setTo(email.getEmail());
-            helper.setSubject(email.getTitle());
-            helper.setText(email.getContent(), true);
+                helper.setFrom(new InternetAddress("jinaru0131","Admin"));//보내는 사람
+                helper.setTo(email.getEmail());
+                helper.setSubject(email.getTitle());
+                helper.setText(email.getContent(), true);
 
-            javaMailSender.send(message);
-            return true;
-
-
+                javaMailSender.send(message);
+                return true;
+            }catch ( MessagingException | UnsupportedEncodingException e){
+                throw new CustomException(BasicExceptionEnum.INTERNAL_SERVER_ERROR,e.getMessage());
+            }
         } else{
             return false;
         }

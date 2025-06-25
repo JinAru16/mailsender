@@ -8,10 +8,12 @@ import lombok.RequiredArgsConstructor;
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
+import org.apache.poi.ss.usermodel.Cell;
 import org.apache.poi.ss.usermodel.Row;
 import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -29,6 +31,9 @@ public class MessageSchedule {
     private final JDA jda;
     private final EmailService emailService;
     private final MailSender mailSender;
+
+    @Value("${report.path}")
+    String path;
 
     //@Scheduled(cron = "0 0 10 * * THU") // 매주 목요일 10:00
     @Scheduled(cron = "10 * * * * * ")
@@ -57,46 +62,52 @@ public class MessageSchedule {
             // 메시지 -> 메일화
             ByteArrayResource excelSheet = convertMessageToExcel(userMessageHistory);
 
-            Boolean b = null;
-            try {
-                b = mailSender.sendWeeklyReport(excelSheet, guildId);
-            } catch (MessagingException e) {
-                throw new RuntimeException(e);
-            } catch (UnsupportedEncodingException e) {
-                throw new RuntimeException(e);
-            }
-            channel.sendMessage(b.toString()).queue();
+            Boolean sendResult = mailSender.sendWeeklyReport(excelSheet, guildId);
+
+            channel.sendMessage(sendResult.toString()).queue();
         });
     }
 
     private ByteArrayResource convertMessageToExcel(List<Message> userMessageHistory) {
-        // 엑셀에 들어갈 어떤 객체
-        Workbook workbook = new XSSFWorkbook();
-        Sheet sheet = workbook.createSheet("Weekly Report");
-
-        // 헤더
-        Row header = sheet.createRow(0);
-        header.createCell(0).setCellValue("content");
-
-        int rowIdx = 1;
-
-        for (Message message : userMessageHistory) {
-            Row row = sheet.createRow(rowIdx++);
-            row.createCell(0).setCellValue(message.getContentDisplay());
-        }
-
+        System.out.println("path : " + path);
         // 저장
-        try (ByteArrayOutputStream out = new ByteArrayOutputStream();) {
-            workbook.write(out);
-            return new ByteArrayResource(out.toByteArray());
-        } catch (IOException e) {
-            throw new RuntimeException("엑셀 저장 실패", e);
-        } finally {
-            try {
-                workbook.close();
-            } catch (IOException e) {
-                // 무시
+        try (InputStream template = new FileInputStream(path)) {
+            Workbook workbook = new XSSFWorkbook(template);
+            Sheet sheet = workbook.getSheetAt(0);
+
+            int startRowIdx = 12;
+            int endRowIdx = 26;
+
+            // 노무법인: 전주 / 금주 셀 13~26번째 row
+            for(int rowIdx = startRowIdx; rowIdx < endRowIdx; rowIdx++){
+                Row  row = sheet.getRow(rowIdx);
+                Cell cellCurrentWeek = row.getCell(4); // E열 (금주)
+                Cell cellLastWeek = row.getCell(3); // D열 (전주)
+
+                // 기존 금주 → 전주로 복사
+                cellLastWeek.setCellValue(cellCurrentWeek.getStringCellValue());
             }
+
+            int rowIdx = startRowIdx;
+
+            for (Message message : userMessageHistory) {
+                Row row = sheet.getRow(rowIdx++);
+                Cell cellCurrentWeek = row.getCell(4); // E열 (금주)
+                cellCurrentWeek.setCellValue(message.getContentDisplay());
+                if (rowIdx == endRowIdx){
+                    break;
+                }
+            }
+
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            workbook.write(out);
+
+            try (FileOutputStream fos = new FileOutputStream(path)) {
+                fos.write(out.toByteArray());
+            }
+            return new ByteArrayResource(out.toByteArray());
+        } catch (Exception e) {
+            throw new RuntimeException("엑셀 저장 실패" + e.getMessage());
         }
     }
 }
